@@ -8,16 +8,17 @@ from scipy.sparse.linalg import spsolve
 from scipy.sparse.linalg import inv
 from scipy.sparse import csc_matrix
 from scipy.sparse.linalg import eigs
-
+from sklearn.neighbors import KDTree
 
 #Defining constants
 L = 10
 dx = 0.1
 k = 1/(2*dx**2)
+w = 1
 n = 2 #Ground State
 xCoords = np.arange(-L/2,L/2+dx, dx) #create the discrete x and y grids
 numNodes = len(xCoords)
-
+horizon = 3.015 
 #np.savetxt("/home/doctajfox/Documents/Thesis_Research/SolidStatePhysics/SchrodingersEquation1D/data/K.csv", K, delimiter=",")
 #np.savetxt("/home/doctajfox/Documents/Thesis_Research/SolidStatePhysics/SchrodingersEquation1D/data/v.csv", V, delimiter=",")
 #np.savetxt("C:\\Users\\johnf\\Documents\\Thesis\\SchrodingersEquation1D\\data\\K.csv", K, delimiter = ",")
@@ -27,6 +28,9 @@ def calculatePotentialEnergy():
     V = 0.5*w**2*xCoords**2
     return V
 
+##################################################################################################
+#Finite Difference
+##################################################################################################
 def createKMatrix(V):
     data0 = np.array([(numNodes-3)*[-k]])
     data1 = np.array([(numNodes-2)*[2*k]])
@@ -37,10 +41,23 @@ def createKMatrix(V):
             +spdiags(V[1:numNodes-1], 0, numNodes-2, numNodes-2 ).toarray()
     return K
 
+##################################################################################################
+#PDDO
+##################################################################################################
+def findFamilyMembers():
+    tree = KDTree(xCoords.reshape((numNodes,1)), leaf_size=2)
+    familyMembers, xis = tree.query_radius(xCoords.reshape((numNodes,1)), r = dx*horizon, sort_results=True, return_distance=True) 
+    return familyMembers, xis
+
+def calcPDDODerivatives():
+    return 0
 def main():
     V = calculatePotentialEnergy() 
+    #PDDO
+    familyMembers, xis = findFamilyMembers()
+    
     K = createKMatrix(V)
-    En, Phi = eigs(K) 
+    En, Phi = eigs(K)
 
 
     #a = input('').split(" ")[0]
